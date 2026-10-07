@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://stack10.pedrobicas.com/sitemap.xml
