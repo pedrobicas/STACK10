@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="pt-BR" data-skin="classic">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0D1240" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="description" content="STACK10: falling-block puzzle para navegador com replay determinístico, desafios diários, progressão, gamepad e controles touch." />
+  <meta name="author" content="Pedro Bicas" />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://stack10.pedrobicas.com/" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&family=Pixelify+Sans:wght@400..700&display=swap" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="pt_BR" />
+  <meta property="og:title" content="STACK10 — Falling-block puzzle" />
+  <meta property="og:description" content="Simulação determinística a 120 Hz, replays, desafios diários, progressão e controles avançados." />
+  <meta property="og:url" content="https://stack10.pedrobicas.com/" />
+  <meta property="og:image" content="https://stack10.pedrobicas.com/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="STACK10 — Falling-block puzzle" />
+  <meta name="twitter:description" content="Simulação determinística, replays, desafios diários e progressão no navegador." />
+  <meta name="twitter:image" content="https://stack10.pedrobicas.com/og-image.png" />
+  <title>STACK10 — Falling-block puzzle</title>
+</head>
+<body>
+<canvas id="confetti" aria-hidden="true"></canvas>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<header class="top">
+  <a class="logo" href="#" id="logo" aria-label="STACK10"><span>S</span><span>T</span><span>A</span><span>C</span><span>K</span><span>1</span><span>0</span></a>
+  <div class="top-right">
+    <button class="player" id="player-btn" type="button" aria-label="Abrir perfil">
+      <span class="lvl-badge" id="top-level">NV 1</span>
+      <span class="xpbar" aria-hidden="true"><i id="top-xp"></i></span>
+      <span class="streak" id="top-streak" title="Dias seguidos jogando"><svg viewBox="0 0 7 8" aria-hidden="true"><path fill="#FF9A3D" d="M3 0h1v1h1v2h1v1h1v3H6v1H1V7H0V4h1V3h1V1h1z"/><path fill="#F7D21B" d="M3 4h1v1h1v2H2V5h1z"/></svg><b id="top-streak-n">0</b></span>
+    </button>
+    <button class="tbtn opt" id="visual-btn" type="button">Visual</button>
+    <button class="tbtn opt" id="controls-btn" type="button">Controles</button>
+    <button class="tbtn" id="music-btn" type="button" aria-pressed="true">Música</button>
+    <button class="tbtn" id="sfx-btn" type="button" aria-pressed="true">Sons</button>
+  </div>
+</header>
+
+<main class="stage" id="stage">
+  <aside class="col">
+    <section class="box"><h2>RESERVA</h2><canvas id="hold-canvas" aria-label="Peça na reserva"></canvas></section>
+    <section class="box"><h2>PONTOS</h2><span class="num" id="score">0</span><span class="sub">RECORDE <span id="best">—</span></span></section>
+    <section class="box fever" id="fever-box"><h2><span>FRENESI</span><span class="fever-x2">×2</span></h2><div class="meter"><i id="fever-fill"></i></div></section>
+    <section class="box"><div class="mini-rows">
+      <div><span>Quadras</span><b id="quads">0</b></div>
+      <div><span>T-spins</span><b id="tspins">0</b></div>
+      <div><span>Combo</span><b id="combo">—</b></div>
+    </div></section>
+  </aside>
+
+  <div class="mhud" id="mhud">
+    <canvas id="mini-canvas" aria-label="Reserva e próximas peças"></canvas>
+    <div class="mstats">
+      <span>PONTOS<b id="m-score">0</b></span><span>NÍVEL<b id="m-level">1</b></span><span>LINHAS<b id="m-lines">0</b></span><span id="m-clock-l">TEMPO<b id="m-clock">0:00</b></span>
+    </div>
+    <div class="meter fever" id="m-fever"><i id="m-fever-fill"></i></div>
+  </div>
+
+  <div class="well">
+    <div class="wall" id="frame">
+      <canvas id="board" aria-label="Poço do jogo"></canvas>
+      <div class="events" id="events" aria-live="polite"></div>
+      <div class="replay-bar" id="replay-bar" hidden>
+        <div class="replay-track"><i id="replay-progress"></i></div>
+        <div class="replay-row">
+          <span class="tag">● REPLAY</span>
+          <button type="button" data-speed="0.5">½×</button><button type="button" data-speed="1">1×</button><button type="button" data-speed="2">2×</button><button type="button" data-speed="4">4×</button>
+          <button type="button" id="replay-toggle">Pausar</button><button type="button" id="replay-exit">Sair</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <aside class="col">
+    <section class="box"><h2>PRÓXIMAS</h2><canvas id="next-canvas" aria-label="Próximas peças"></canvas></section>
+    <section class="box"><h2>NÍVEL</h2><span class="num" id="level">1</span></section>
+    <section class="box"><h2>LINHAS</h2><span class="num" id="lines">0</span></section>
+    <section class="box"><h2 id="clock-label">TEMPO</h2><span class="num" id="clock">0:00.00</span><span class="pace" id="pace"></span></section>
+  </aside>
+
+  <div class="touch" id="touch" aria-label="Controles por toque">
+    <button type="button" data-act="ccw" aria-label="Girar no sentido anti-horário">↺</button>
+    <button type="button" data-act="cw" aria-label="Girar no sentido horário">↻</button>
+    <button type="button" data-act="hold">RESERVA</button>
+    <button type="button" data-act="hard">SOLTAR</button>
+    <button type="button" data-act="left" aria-label="Mover para a esquerda">←</button>
+    <button type="button" data-act="soft" aria-label="Descer">↓</button>
+    <button type="button" data-act="right" aria-label="Mover para a direita">→</button>
+    <button type="button" data-act="pause" aria-label="Pausar">II</button>
+  </div>
+</main>
+
+<!-- menu -->
+<div class="overlay" id="menu">
+  <div class="panel" role="dialog" aria-labelledby="menu-title">
+    <h1 class="logo menu-logo" id="menu-title" aria-label="STACK10"><span>S</span><span>T</span><span>A</span><span>C</span><span>K</span><span>1</span><span>0</span></h1>
+    <div class="modes" id="modes"></div>
+    <p class="mode-desc" id="mode-desc"></p>
+    <button class="btn wide" id="play-btn" type="button">JOGAR <kbd>ENTER</kbd></button>
+    <div class="section-title">Missões de hoje <small id="missions-xp"></small></div>
+    <div class="missions" id="missions"></div>
+    <div class="player-row"><span class="lvl-badge" id="menu-level">NV 1</span><span class="xpbar"><i id="menu-xp"></i></span><span id="menu-xp-text">0/120</span></div>
+    <p class="hint" id="menu-hint"></p>
+    <div class="project-meta" aria-label="Informações do projeto">
+      <span>STACK10 v1.0.0 · Pedro Bicas</span>
+      <button id="about-btn" type="button">Sobre</button>
+      <button id="install-btn" type="button" hidden>Instalar</button>
+      <a href="https://github.com/pedrobicas/stack10" target="_blank" rel="noreferrer">GitHub</a>
+    </div>
+  </div>
+</div>
+
+<!-- pausa -->
+<div class="overlay" id="pause" hidden>
+  <div class="panel" style="width:min(360px,100%);text-align:center">
+    <h2 style="font-size:40px;margin-bottom:18px">PAUSADO</h2>
+    <div style="display:grid;gap:10px">
+      <button class="btn wide" id="resume-btn" type="button">CONTINUAR</button>
+      <button class="btn ghost" id="restart-btn" type="button">Recomeçar</button>
+      <button class="btn ghost" id="quit-btn" type="button">Voltar ao menu</button>
+    </div>
+  </div>
+</div>
+
+<!-- resultado -->
+<div class="overlay" id="result" hidden>
+  <div class="panel result-panel" id="result-panel" role="dialog" aria-labelledby="res-kicker">
+    <div class="res-main">
+      <p class="kicker" id="res-kicker">FIM DE JOGO</p>
+      <div class="res-big" id="res-big">0</div>
+      <div class="res-record" id="res-record" hidden>NOVO RECORDE!</div>
+      <p class="res-note" id="res-note"></p>
+      <div class="res-stats" id="res-stats"></div>
+    </div>
+    <div class="res-xp" id="res-xp">
+      <p class="xp-gain" id="xp-gain">+0 XP</p>
+      <ul class="xp-list" id="xp-list"></ul>
+      <div class="lvl-line"><span class="lvl-badge" id="res-level">NV 1</span><span class="xpbar"><i id="res-xpbar"></i></span><span id="res-xp-text">0/120</span></div>
+      <p class="lvl-up" id="res-levelup" hidden></p>
+    </div>
+    <div class="res-actions">
+      <button class="btn wide" id="again-btn" type="button">JOGAR DE NOVO <kbd>R</kbd></button>
+      <button class="btn ghost" id="watch-btn" type="button">Replay</button>
+      <button class="btn ghost" id="code-btn" type="button">Código</button>
+      <button class="btn ghost" id="menu-btn" type="button">Menu</button>
+    </div>
+  </div>
+</div>
+
+<dialog id="profile-dlg" aria-labelledby="profile-title">
+  <div class="dlg-head"><div><h2 id="profile-title">Perfil</h2><p id="profile-sub"></p></div><button class="x" type="button" data-close aria-label="Fechar">×</button></div>
+  <div class="lvl-line"><span class="lvl-badge" id="pf-level">NV 1</span><span class="xpbar"><i id="pf-xp"></i></span><span id="pf-xp-text"></span></div>
+  <div class="section-title">Conquistas <small id="ach-count"></small></div>
+  <div class="ach-grid" id="ach-grid"></div>
+  <div class="section-title">Recordes</div>
+  <div class="rec-list" id="rec-list"></div>
+  <div class="section-title">Desde o começo</div>
+  <div class="life" id="life"></div>
+  <div class="dlg-foot"><p>Tudo fica salvo neste navegador.</p><button class="btn ghost" id="load-replay-btn" type="button">Carregar replay</button></div>
+</dialog>
+
+<dialog id="visual-dlg" aria-labelledby="visual-title">
+  <div class="dlg-head"><div><h2 id="visual-title">Visual</h2><p>Novos visuais liberam conforme você sobe de nível.</p></div><button class="x" type="button" data-close aria-label="Fechar">×</button></div>
+  <div class="skins" id="skins"></div>
+  <div class="toggles">
+    <div class="toggle"><span>Tremor de tela<small>A tela treme nas quedas e nas quadras.</small></span><button class="switch" type="button" role="switch" data-setting="shake" aria-label="Tremor de tela"></button></div>
+    <div class="toggle"><span>Efeitos completos<small>Partículas e o piscar da tela nas quadras.</small></span><button class="switch" type="button" role="switch" data-setting="effects" aria-label="Efeitos completos"></button></div>
+    <div class="toggle"><span>Peça fantasma<small>Mostra onde a peça vai cair.</small></span><button class="switch" type="button" role="switch" data-setting="ghost" aria-label="Peça fantasma"></button></div>
+  </div>
+</dialog>
+
+<dialog id="controls-dlg" aria-labelledby="controls-title">
+  <div class="dlg-head"><div><h2 id="controls-title">Controles</h2><p>Vale a partir da próxima partida.</p></div><button class="x" type="button" data-close aria-label="Fechar">×</button></div>
+  <div class="handling">
+    <label class="hrow"><span>DAS<small>Quanto tempo segurar até a peça começar a deslizar</small></span><input id="h-das" type="range" min="0" max="300" step="1" /><b id="h-das-v"></b></label>
+    <label class="hrow"><span>ARR<small>Intervalo entre cada passo do deslize (0 vai direto à parede)</small></span><input id="h-arr" type="range" min="0" max="100" step="1" /><b id="h-arr-v"></b></label>
+    <label class="hrow"><span>Descida<small>Quantas vezes a descida rápida é mais rápida que a normal</small></span><input id="h-sdf" type="range" min="1" max="41" step="1" /><b id="h-sdf-v"></b></label>
+  </div>
+  <div class="bindings" id="bindings"></div>
+  <div class="dlg-foot"><p>Clique numa tecla para trocar; Esc cancela. No celular: arraste no poço para mover, toque para girar, deslize para baixo para soltar e para cima para guardar na reserva.</p><button class="btn ghost" id="bindings-reset" type="button">Restaurar padrão</button></div>
+</dialog>
+
+<dialog id="replay-dlg" aria-labelledby="replay-title">
+  <div class="dlg-head"><div><h2 id="replay-title">Código do replay</h2><p id="replay-help"></p></div><button class="x" type="button" data-close aria-label="Fechar">×</button></div>
+  <textarea id="replay-code" spellcheck="false" aria-label="Código do replay"></textarea>
+  <p class="err" id="replay-err" hidden role="alert"></p>
+  <div class="dlg-foot"><span></span><button class="btn" id="replay-primary" type="button">COPIAR</button></div>
+</dialog>
+
+
+<dialog id="about-dlg" aria-labelledby="about-title">
+  <div class="dlg-head"><div><h2 id="about-title">Sobre o STACK10</h2><p>Um falling-block puzzle construído como game engine de navegador.</p></div><button class="x" type="button" data-close aria-label="Fechar">×</button></div>
+  <div class="about-copy">
+    <p>O <strong>STACK10</strong> usa uma simulação determinística de 120 Hz: mesma seed e mesmas entradas produzem a mesma partida, base do sistema de replay e dos desafios diários.</p>
+    <div class="tech-list">
+      <div><b>Engine</b><span>JavaScript + Canvas 2D</span></div>
+      <div><b>Simulação</b><span>fixed timestep de 120 Hz</span></div>
+      <div><b>Controles</b><span>teclado, gamepad e touch</span></div>
+      <div><b>Replay</b><span>seed + eventos compactados</span></div>
+      <div><b>Progressão</b><span>XP, conquistas e missões</span></div>
+      <div><b>Persistência</b><span>local, sem conta obrigatória</span></div>
+    </div>
+    <p>Projeto independente de Pedro Bicas. STACK10 não é afiliado à The Tetris Company.</p>
+    <div class="about-links"><a href="https://pedrobicas.com" target="_blank" rel="noreferrer">Portfólio</a><a href="https://github.com/pedrobicas/stack10" target="_blank" rel="noreferrer">Código-fonte</a></div>
+  </div>
+</dialog>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

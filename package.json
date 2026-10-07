@@ -1,0 +1,45 @@
+{
+  "name": "stack10",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic falling-block puzzle game for the browser.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test tests/*.test.js",
+    "test:watch": "node --test --watch tests/*.test.js",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "node scripts/check-project.mjs",
+    "verify": "npm run check && npm run lint && npm test && npm run build"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "vite": "^7.1.0",
+    "eslint": "^9.36.0",
+    "@eslint/js": "^9.36.0",
+    "globals": "^16.0.0",
+    "prettier": "^3.6.0"
+  },
+  "author": "Pedro Bicas",
+  "license": "MIT",
+  "homepage": "https://stack10.pedrobicas.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pedrobicas/stack10.git"
+  },
+  "keywords": [
+    "game",
+    "javascript",
+    "canvas",
+    "pwa",
+    "falling-block",
+    "deterministic",
+    "replay"
+  ]
+}
